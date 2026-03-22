@@ -1,0 +1,17 @@
+# Environment
+.env
+.DS_Store
+
+# Go build cache
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test cache
+*.test
+*.out
+
+# Dependency directories
+vendor/
