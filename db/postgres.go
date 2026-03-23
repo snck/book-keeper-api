@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	_ "github.com/jackc/pgx"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 var DB *sql.DB
@@ -17,7 +17,7 @@ func Connect() error {
 	}
 
 	var err error
-	DB, err = sql.Open("postgres", connStr)
+	DB, err = sql.Open("pgx", connStr)
 	if err != nil {
 		return err
 	}
