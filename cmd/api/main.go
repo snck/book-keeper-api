@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"github.com/snck/book-keeper-api/db"
 	"github.com/snck/book-keeper-api/handler"
 	"github.com/snck/book-keeper-api/repository"
@@ -12,6 +13,8 @@ import (
 )
 
 func main() {
+
+	godotenv.Load()
 
 	err := db.Connect()
 	if err != nil {
