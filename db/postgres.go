@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+
+	_ "github.com/jackc/pgx"
 )
 
 var DB *sql.DB
