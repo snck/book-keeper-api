@@ -30,6 +30,7 @@ func main() {
 	r := gin.Default()
 
 	r.GET("/expenses", expenseHandler.GetExpenses)
+	r.POST("/expenses", expenseHandler.CreateExpense)
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"status": "healthy",
