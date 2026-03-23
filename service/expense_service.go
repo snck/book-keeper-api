@@ -16,3 +16,7 @@ func NewExpenseService(repository *repository.ExpenseRepository) *ExpenseService
 func (s *ExpenseService) CreateExpense(expense model.Expense) (model.Expense, error) {
 	return s.repository.CreateExpense(expense)
 }
+
+func (s *ExpenseService) GetExpenses(limit int, offset int) ([]model.Expense, error) {
+	return s.repository.GetExpenses(limit, offset)
+}

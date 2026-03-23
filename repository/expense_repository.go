@@ -41,3 +41,61 @@ func (r *ExpenseRepository) CreateExpense(expense model.Expense) (model.Expense,
 
 	return expense, nil
 }
+
+func (r *ExpenseRepository) GetExpenses(limit int, offset int) ([]model.Expense, error) {
+	query := `
+		SELECT
+			e.id,
+			e.amount,
+			e.note,
+			e.expense_date,
+			e.created_at,
+			e.updated_at,
+			e.user_id,
+			c.id,
+			c.category_name
+		FROM expenses e
+		JOIN categories c ON c.id = e.category_id
+		ORDER BY e.created_at DESC, e.id DESC
+		LIMIT $1 OFFSET $2
+	`
+
+	rows, err := r.db.Query(query, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	expenses := make([]model.Expense, 0)
+	for rows.Next() {
+		var expense model.Expense
+		var updatedAt sql.NullTime
+
+		err := rows.Scan(
+			&expense.ID,
+			&expense.Amount,
+			&expense.Note,
+			&expense.ExpenseDate,
+			&expense.CreatedAt,
+			&updatedAt,
+			&expense.User.ID,
+			&expense.Category.ID,
+			&expense.Category.CategoryName,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		if updatedAt.Valid {
+			expense.UpdatedAt = &updatedAt.Time
+		}
+
+		expenses = append(expenses, expense)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return expenses, nil
+}

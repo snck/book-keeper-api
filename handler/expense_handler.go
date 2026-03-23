@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -19,7 +20,17 @@ func NewExpenseHandler(service *service.ExpenseService) *ExpenseHandler {
 }
 
 func (h *ExpenseHandler) GetExpenses(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"status": "ok"})
+
+	limit := getQueryInt("limit", 10, c)
+	offset := getQueryInt("offset", 0, c)
+
+	res, err := h.service.GetExpenses(limit, offset)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "error with database"})
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
 }
 
 func (h *ExpenseHandler) CreateExpense(c *gin.Context) {
@@ -64,4 +75,19 @@ func (h *ExpenseHandler) CreateExpense(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, res)
+}
+
+func getQueryInt(name string, defaultValue int, c *gin.Context) int {
+	param := c.Query(name)
+
+	if param == "" {
+		return defaultValue
+	}
+
+	parsedValue, err := strconv.Atoi(param)
+	if err != nil {
+		return defaultValue
+	}
+
+	return parsedValue
 }
