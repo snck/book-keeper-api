@@ -10,5 +10,20 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  migrate:
+    image: migrate/migrate:v4.19.1
+    profiles: ["tools"]
+    volumes:
+      - ./migrations:/migrations
+    entrypoint:
+      [
+        "migrate",
+        "-path",
+        "/migrations",
+        "-database",
+        "postgres://postgres:postgres@db:5432/book_keeper?sslmode=disable"
+      ]
+    command: ["up"]
+    
 volumes:
   postgres_data:
