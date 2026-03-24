@@ -104,6 +104,55 @@ func (h *ExpenseHandler) CreateExpense(c *gin.Context) {
 	c.JSON(http.StatusCreated, res)
 }
 
+func (h *ExpenseHandler) UpdateExpense(c *gin.Context) {
+	id := getParamUUID("id", c)
+	if id == uuid.Nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid expense id"})
+		return
+	}
+
+	var req ExpenseRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid request"})
+		return
+	}
+
+	expenseDate, err := time.Parse(time.RFC3339, req.ExpenseDate)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid time format"})
+		return
+	}
+
+	expense := model.Expense{
+		ID:          id,
+		Amount:      req.Amount,
+		Category:    model.Category{ID: req.CategoryID},
+		Note:        req.Note,
+		ExpenseDate: expenseDate,
+	}
+
+	updatedExpense, err := h.service.UpdateExpense(expense)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "error with database"})
+		return
+	}
+
+	if updatedExpense == nil {
+		c.JSON(http.StatusNotFound, gin.H{"message": "expense id not found"})
+		return
+	}
+
+	res := ExpenseResponse{
+		ID:          updatedExpense.ID,
+		Amount:      updatedExpense.Amount,
+		Note:        updatedExpense.Note,
+		ExpenseDate: updatedExpense.ExpenseDate.Format(time.RFC3339),
+		Category:    Category{ID: updatedExpense.Category.ID, CategoryName: updatedExpense.Category.CategoryName},
+	}
+
+	c.JSON(http.StatusOK, res)
+}
+
 func getQueryInt(name string, defaultValue int, c *gin.Context) int {
 	param := c.Query(name)
 
@@ -121,12 +170,16 @@ func getQueryInt(name string, defaultValue int, c *gin.Context) int {
 
 func getQueryUUID(name string, c *gin.Context) uuid.UUID {
 	param := c.Query(name)
+	return convertUUID(param)
+}
 
-	if param == "" {
-		return uuid.Nil
-	}
+func getParamUUID(name string, c *gin.Context) uuid.UUID {
+	param := c.Param(name)
+	return convertUUID(param)
+}
 
-	id, err := uuid.Parse(param)
+func convertUUID(idStr string) uuid.UUID {
+	id, err := uuid.Parse(idStr)
 	if err != nil {
 		return uuid.Nil
 	}

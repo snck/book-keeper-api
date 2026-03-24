@@ -124,6 +124,39 @@ func (r *ExpenseRepository) GetTotalExpense(categoryID uuid.UUID, dateFrom time.
 	return total, nil
 }
 
+func (r *ExpenseRepository) UpdateExpense(expense model.Expense) (*model.Expense, error) {
+	query := `
+		WITH updated_expense AS (
+			UPDATE expenses
+			SET amount = $1, category_id = $2, note = $3, expense_date = $4, updated_at = NOW()
+			WHERE id = $5
+			RETURNING id, category_id
+		)
+		SELECT e.id, c.category_name
+		FROM updated_expense e
+		JOIN categories c ON c.id = e.category_id
+	`
+
+	err := r.db.QueryRow(
+		query,
+		expense.Amount,
+		expense.Category.ID,
+		expense.Note,
+		expense.ExpenseDate,
+		expense.ID,
+	).Scan(&expense.ID, &expense.Category.CategoryName)
+
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &expense, nil
+}
+
 func buildExpenseFilterQuery(baseQuery string, categoryID uuid.UUID, dateFrom time.Time, dateTo time.Time) (string, []any) {
 	conditions := make([]string, 0, 3)
 	args := make([]any, 0, 3)

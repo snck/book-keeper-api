@@ -32,6 +32,10 @@ func (s *ExpenseService) GetTotalExpense(categoryID uuid.UUID, dateFrom time.Tim
 	return s.repository.GetTotalExpense(categoryID, dateFrom, dateTo)
 }
 
+func (s *ExpenseService) UpdateExpense(expense model.Expense) (*model.Expense, error) {
+	return s.repository.UpdateExpense(expense)
+}
+
 func verifyAndAddEndDateInclusive(dateFrom time.Time, dateTo time.Time) (time.Time, time.Time) {
 
 	if dateFrom.IsZero() || dateTo.IsZero() {
