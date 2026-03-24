@@ -36,6 +36,10 @@ func (s *ExpenseService) UpdateExpense(expense model.Expense) (*model.Expense, e
 	return s.repository.UpdateExpense(expense)
 }
 
+func (s *ExpenseService) DeleteExpense(id uuid.UUID) error {
+	return s.repository.DeleteExpense(id)
+}
+
 func verifyAndAddEndDateInclusive(dateFrom time.Time, dateTo time.Time) (time.Time, time.Time) {
 
 	if dateFrom.IsZero() || dateTo.IsZero() {

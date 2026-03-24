@@ -157,6 +157,29 @@ func (r *ExpenseRepository) UpdateExpense(expense model.Expense) (*model.Expense
 	return &expense, nil
 }
 
+func (r *ExpenseRepository) DeleteExpense(id uuid.UUID) error {
+	query := `
+		DELETE FROM expenses
+		WHERE id = $1
+	`
+
+	result, err := r.db.Exec(query, id)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return sql.ErrNoRows
+	}
+
+	return nil
+}
+
 func buildExpenseFilterQuery(baseQuery string, categoryID uuid.UUID, dateFrom time.Time, dateTo time.Time) (string, []any) {
 	conditions := make([]string, 0, 3)
 	args := make([]any, 0, 3)

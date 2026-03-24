@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"database/sql"
 	"net/http"
 	"strconv"
 	"time"
@@ -151,6 +152,27 @@ func (h *ExpenseHandler) UpdateExpense(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, res)
+}
+
+func (h *ExpenseHandler) DeleteExpense(c *gin.Context) {
+	id := getParamUUID("id", c)
+	if id == uuid.Nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid expense id"})
+		return
+	}
+
+	err := h.service.DeleteExpense(id)
+	if err == sql.ErrNoRows {
+		c.JSON(http.StatusNotFound, gin.H{"message": "expense not found"})
+		return
+	}
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "error with database"})
+		return
+	}
+
+	c.Status(http.StatusNoContent)
 }
 
 func getQueryInt(name string, defaultValue int, c *gin.Context) int {
