@@ -2,7 +2,11 @@ package repository
 
 import (
 	"database/sql"
+	"fmt"
+	"strings"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/snck/book-keeper-api/model"
 )
 
@@ -42,8 +46,8 @@ func (r *ExpenseRepository) CreateExpense(expense model.Expense) (model.Expense,
 	return expense, nil
 }
 
-func (r *ExpenseRepository) GetExpenses(limit int, offset int) ([]model.Expense, error) {
-	query := `
+func (r *ExpenseRepository) GetExpenses(limit int, offset int, categoryID uuid.UUID, dateFrom time.Time, dateTo time.Time) ([]model.Expense, error) {
+	baseQuery := `
 		SELECT
 			e.id,
 			e.amount,
@@ -56,11 +60,14 @@ func (r *ExpenseRepository) GetExpenses(limit int, offset int) ([]model.Expense,
 			c.category_name
 		FROM expenses e
 		JOIN categories c ON c.id = e.category_id
-		ORDER BY e.created_at DESC, e.id DESC
-		LIMIT $1 OFFSET $2
 	`
 
-	rows, err := r.db.Query(query, limit, offset)
+	query, args := buildExpenseFilterQuery(baseQuery, categoryID, dateFrom, dateTo)
+
+	args = append(args, limit, offset)
+	query += fmt.Sprintf("\nORDER BY e.created_at DESC, e.id DESC\nLIMIT $%d OFFSET $%d", len(args)-1, len(args))
+
+	rows, err := r.db.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -98,4 +105,48 @@ func (r *ExpenseRepository) GetExpenses(limit int, offset int) ([]model.Expense,
 	}
 
 	return expenses, nil
+}
+
+func (r *ExpenseRepository) GetTotalExpense(categoryID uuid.UUID, dateFrom time.Time, dateTo time.Time) (int64, error) {
+	baseQuery := `
+		SELECT COUNT(*)
+		FROM expenses e
+	`
+
+	query, args := buildExpenseFilterQuery(baseQuery, categoryID, dateFrom, dateTo)
+
+	var total int64
+	err := r.db.QueryRow(query, args...).Scan(&total)
+	if err != nil {
+		return 0, err
+	}
+
+	return total, nil
+}
+
+func buildExpenseFilterQuery(baseQuery string, categoryID uuid.UUID, dateFrom time.Time, dateTo time.Time) (string, []any) {
+	conditions := make([]string, 0, 3)
+	args := make([]any, 0, 3)
+
+	if categoryID != uuid.Nil {
+		args = append(args, categoryID)
+		conditions = append(conditions, fmt.Sprintf("e.category_id = $%d", len(args)))
+	}
+
+	if !dateFrom.IsZero() {
+		args = append(args, dateFrom)
+		conditions = append(conditions, fmt.Sprintf("e.expense_date >= $%d", len(args)))
+	}
+
+	if !dateTo.IsZero() {
+		args = append(args, dateTo)
+		conditions = append(conditions, fmt.Sprintf("e.expense_date < $%d", len(args)))
+	}
+
+	query := baseQuery
+	if len(conditions) > 0 {
+		query += "\nWHERE " + strings.Join(conditions, "\n  AND ")
+	}
+
+	return query, args
 }

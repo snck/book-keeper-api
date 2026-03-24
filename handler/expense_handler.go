@@ -23,11 +23,38 @@ func (h *ExpenseHandler) GetExpenses(c *gin.Context) {
 
 	limit := getQueryInt("limit", 10, c)
 	offset := getQueryInt("offset", 0, c)
+	category := getQueryUUID("category", c)
+	dateFrom := getQueryDate("date-from", c)
+	dateTo := getQueryDate("date-to", c)
 
-	res, err := h.service.GetExpenses(limit, offset)
+	expenses, err := h.service.GetExpenses(limit, offset, category, dateFrom, dateTo)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "error with database"})
 		return
+	}
+	total, err := h.service.GetTotalExpense(category, dateFrom, dateTo)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "error with database"})
+		return
+	}
+
+	var res ExpensesResponse
+	res.Expenses = make([]ExpenseResponse, 0, len(expenses))
+	res.Limit = limit
+	res.Offset = offset
+	res.Total = total
+
+	for _, expense := range expenses {
+		res.Expenses = append(res.Expenses, ExpenseResponse{
+			ID:          expense.ID,
+			Amount:      expense.Amount,
+			Note:        expense.Note,
+			ExpenseDate: expense.ExpenseDate.Format(time.RFC3339),
+			Category: Category{
+				ID:           expense.Category.ID,
+				CategoryName: expense.Category.CategoryName,
+			},
+		})
 	}
 
 	c.JSON(http.StatusOK, res)
@@ -90,4 +117,35 @@ func getQueryInt(name string, defaultValue int, c *gin.Context) int {
 	}
 
 	return parsedValue
+}
+
+func getQueryUUID(name string, c *gin.Context) uuid.UUID {
+	param := c.Query(name)
+
+	if param == "" {
+		return uuid.Nil
+	}
+
+	id, err := uuid.Parse(param)
+	if err != nil {
+		return uuid.Nil
+	}
+
+	return id
+}
+
+func getQueryDate(name string, c *gin.Context) time.Time {
+	param := c.Query(name)
+
+	if param == "" {
+		return time.Time{}
+	}
+
+	dateFormat := "2006-01-02"
+	parsedDate, err := time.Parse(dateFormat, param)
+	if err != nil {
+		return time.Time{}
+	}
+
+	return parsedDate
 }

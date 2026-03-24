@@ -21,3 +21,10 @@ type Category struct {
 	ID           uuid.UUID `json:"id"`
 	CategoryName string    `json:"category_name"`
 }
+
+type ExpensesResponse struct {
+	Expenses []ExpenseResponse `json:"expenses"`
+	Limit    int               `json:"limit"`
+	Offset   int               `json:"offset"`
+	Total    int64             `json:"total"`
+}
