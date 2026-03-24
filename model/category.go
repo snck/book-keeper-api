@@ -11,5 +11,5 @@ type Category struct {
 	CategoryName string
 	User         User
 	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	UpdatedAt    *time.Time
 }

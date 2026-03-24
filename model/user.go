@@ -10,5 +10,5 @@ type User struct {
 	ID        uuid.UUID
 	UserName  string
 	CreatedAt time.Time
-	UpdatedAt time.Time
+	UpdatedAt *time.Time
 }

@@ -14,5 +14,5 @@ type Expense struct {
 	User        User
 	ExpenseDate time.Time
 	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	UpdatedAt   *time.Time
 }
