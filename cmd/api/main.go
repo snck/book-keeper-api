@@ -39,6 +39,7 @@ func main() {
 
 	r.POST("/signup", authHandler.Signup)
 	r.POST("/login", authHandler.Login)
+	r.POST("/logout", authHandler.Logout)
 
 	r.GET("/expenses", expenseHandler.GetExpenses)
 	r.POST("/expenses", expenseHandler.CreateExpense)

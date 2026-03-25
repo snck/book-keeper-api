@@ -2,7 +2,9 @@ package repository
 
 import (
 	"database/sql"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/snck/book-keeper-api/model"
 )
 
@@ -67,4 +69,14 @@ func (r *AuthenticationRepository) GetUserByUserName(userName string) (*model.Us
 	}
 
 	return &user, nil
+}
+
+func (r *AuthenticationRepository) AddTokenToBlocklist(userID uuid.UUID, token string, expiredAt time.Time) error {
+	query := `
+		INSERT INTO blocklists (user_id, token, expired_at)
+		VALUES ($1, $2, $3)
+	`
+
+	_, err := r.db.Exec(query, userID, token, expiredAt)
+	return err
 }

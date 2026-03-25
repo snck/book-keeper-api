@@ -5,10 +5,17 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"github.com/snck/book-keeper-api/model"
 	"github.com/snck/book-keeper-api/repository"
 	"golang.org/x/crypto/bcrypt"
 )
+
+type MyCustomClaims struct {
+	ID       uuid.UUID `json:"id"`
+	UserName string    `json:"user_name"`
+	jwt.RegisteredClaims
+}
 
 type AuthenticationService struct {
 	repository *repository.AuthenticationRepository
@@ -57,12 +64,36 @@ func (s *AuthenticationService) IsPasswordValid(passwordHash string, password st
 func (s *AuthenticationService) GenerateToken(user model.User) (string, error) {
 	key := os.Getenv("KEY")
 	t := jwt.NewWithClaims(jwt.SigningMethodHS256,
-		jwt.MapClaims{
-			"id":       user.ID,
-			"userName": user.UserName,
-			"exp":      time.Now().Add(time.Hour * 24).Unix(),
+		MyCustomClaims{
+			ID:       user.ID,
+			UserName: user.UserName,
+			RegisteredClaims: jwt.RegisteredClaims{
+				ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)),
+			},
 		})
 
 	return t.SignedString([]byte(key))
+}
 
+func (s *AuthenticationService) ParseAndValidateToken(tokenStr string) (*MyCustomClaims, error) {
+
+	claims := &MyCustomClaims{}
+	token, err := jwt.ParseWithClaims(tokenStr, claims, func(t *jwt.Token) (any, error) {
+		key := os.Getenv("KEY")
+		return []byte(key), nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !token.Valid {
+		return nil, nil
+	}
+
+	return claims, nil
+}
+
+func (s *AuthenticationService) InvalidateToken(id uuid.UUID, token string, expiredAt time.Time) error {
+	return s.repository.AddTokenToBlocklist(id, token, expiredAt)
 }

@@ -1,10 +1,12 @@
 package handler
 
 import (
-	"fmt"
+	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/snck/book-keeper-api/service"
 )
 
@@ -56,7 +58,7 @@ func (h *AuthenticationHandler) Login(c *gin.Context) {
 	}
 
 	if user == nil {
-		c.JSON(http.StatusNotFound, gin.H{"message": "invalid user name or password"})
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "invalid user name or password"})
 		return
 	}
 
@@ -67,7 +69,6 @@ func (h *AuthenticationHandler) Login(c *gin.Context) {
 
 	token, err := h.service.GenerateToken(*user)
 	if err != nil {
-		fmt.Println("error generating token", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "error generating token"})
 		return
 	}
@@ -79,4 +80,40 @@ func (h *AuthenticationHandler) Login(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, res)
+}
+
+func (h *AuthenticationHandler) Logout(c *gin.Context) {
+
+	token := c.GetHeader("Authorization")
+	token = strings.TrimPrefix(token, "Bearer ")
+
+	claims, err := h.service.ParseAndValidateToken(token)
+	if err != nil {
+		if errors.Is(err, jwt.ErrTokenExpired) || errors.Is(err, jwt.ErrTokenSignatureInvalid) {
+			c.JSON(http.StatusUnauthorized, gin.H{"message": "invalid token"})
+			return
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "error parsing token"})
+			return
+		}
+	}
+
+	if claims == nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "invalid token"})
+		return
+	}
+
+	expiredAt, err := claims.GetExpirationTime()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "error parsing token"})
+		return
+	}
+
+	err = h.service.InvalidateToken(claims.ID, token, expiredAt.Time)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "error with database"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Log out successfully"})
 }
