@@ -31,7 +31,13 @@ func main() {
 	categoryService := service.NewCategoryService(categoryRepo)
 	categoryHandler := handler.NewCategoryHandler(categoryService)
 
+	authRepo := repository.NewAuthenticationRepository(db.DB)
+	authService := service.NewAuthenticationService(authRepo)
+	authHandler := handler.NewAuthenticationHandler(authService)
+
 	r := gin.Default()
+
+	r.POST("/signup", authHandler.Signup)
 
 	r.GET("/expenses", expenseHandler.GetExpenses)
 	r.POST("/expenses", expenseHandler.CreateExpense)
