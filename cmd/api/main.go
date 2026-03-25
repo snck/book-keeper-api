@@ -27,12 +27,17 @@ func main() {
 	expenseService := service.NewExpenseService(expenseRepo)
 	expenseHandler := handler.NewExpenseHandler(expenseService)
 
+	categoryRepo := repository.NewCategoryRepository(db.DB)
+	categoryService := service.NewCategoryService(categoryRepo)
+	categoryHandler := handler.NewCategoryHandler(categoryService)
+
 	r := gin.Default()
 
 	r.GET("/expenses", expenseHandler.GetExpenses)
 	r.POST("/expenses", expenseHandler.CreateExpense)
 	r.PUT("/expenses/:id", expenseHandler.UpdateExpense)
 	r.DELETE("/expenses/:id", expenseHandler.DeleteExpense)
+	r.GET("/categories", categoryHandler.GetCategories)
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"status": "healthy",
