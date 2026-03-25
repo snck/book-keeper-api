@@ -41,3 +41,30 @@ func (r *AuthenticationRepository) AddNewUser(user model.User) (*model.User, err
 
 	return &user, nil
 }
+
+func (r *AuthenticationRepository) GetUserByUserName(userName string) (*model.User, error) {
+	query := `
+		SELECT id, user_name, password_hash, created_at, updated_at
+		FROM users
+		WHERE user_name = $1
+	`
+
+	var user model.User
+	err := r.db.QueryRow(query, userName).Scan(
+		&user.ID,
+		&user.UserName,
+		&user.PasswordHash,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
+
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}

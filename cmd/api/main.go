@@ -38,6 +38,7 @@ func main() {
 	r := gin.Default()
 
 	r.POST("/signup", authHandler.Signup)
+	r.POST("/login", authHandler.Login)
 
 	r.GET("/expenses", expenseHandler.GetExpenses)
 	r.POST("/expenses", expenseHandler.CreateExpense)

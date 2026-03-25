@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -39,4 +40,43 @@ func (h *AuthenticationHandler) Signup(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, res)
+}
+
+func (h *AuthenticationHandler) Login(c *gin.Context) {
+	var req LoginRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid request"})
+		return
+	}
+
+	user, err := h.service.GetUser(req.UserName)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "error with database"})
+		return
+	}
+
+	if user == nil {
+		c.JSON(http.StatusNotFound, gin.H{"message": "invalid user name or password"})
+		return
+	}
+
+	if !h.service.IsPasswordValid(user.PasswordHash, req.Password) {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "invalid user name or password"})
+		return
+	}
+
+	token, err := h.service.GenerateToken(*user)
+	if err != nil {
+		fmt.Println("error generating token", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "error generating token"})
+		return
+	}
+
+	res := LoginResponse{
+		UserID:   user.ID,
+		UserName: user.UserName,
+		Token:    token,
+	}
+
+	c.JSON(http.StatusOK, res)
 }

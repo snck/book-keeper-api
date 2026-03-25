@@ -38,3 +38,14 @@ type SignupResponse struct {
 	ID       uuid.UUID `json:"id"`
 	UserName string    `json:"user_name"`
 }
+
+type LoginRequest struct {
+	UserName string `json:"user_name"`
+	Password string `json:"password"`
+}
+
+type LoginResponse struct {
+	UserID   uuid.UUID `json:"user_id"`
+	UserName string    `json:"user_name"`
+	Token    string    `json:"token"`
+}
