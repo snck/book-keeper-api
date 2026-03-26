@@ -28,12 +28,24 @@ func (h *ExpenseHandler) GetExpenses(c *gin.Context) {
 	dateFrom := getQueryDate("date-from", c)
 	dateTo := getQueryDate("date-to", c)
 
-	expenses, err := h.service.GetExpenses(limit, offset, category, dateFrom, dateTo)
+	userIDValue, exist := c.Get("userID")
+	if !exist {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "invalid user id"})
+		return
+	}
+
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "invalid user id"})
+		return
+	}
+
+	expenses, err := h.service.GetExpenses(limit, offset, category, dateFrom, dateTo, userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "error with database"})
 		return
 	}
-	total, err := h.service.GetTotalExpense(category, dateFrom, dateTo)
+	total, err := h.service.GetTotalExpense(category, dateFrom, dateTo, userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "error with database"})
 		return

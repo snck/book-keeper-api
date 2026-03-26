@@ -20,16 +20,15 @@ func (s *ExpenseService) CreateExpense(expense model.Expense) (model.Expense, er
 	return s.repository.CreateExpense(expense)
 }
 
-func (s *ExpenseService) GetExpenses(limit int, offset int, categoryID uuid.UUID, dateFrom time.Time, dateTo time.Time) ([]model.Expense, error) {
+func (s *ExpenseService) GetExpenses(limit int, offset int, categoryID uuid.UUID, dateFrom time.Time, dateTo time.Time, userID uuid.UUID) ([]model.Expense, error) {
 
 	dateFrom, dateTo = verifyAndAddEndDateInclusive(dateFrom, dateTo)
-	return s.repository.GetExpenses(limit, offset, categoryID, dateFrom, dateTo)
+	return s.repository.GetExpenses(limit, offset, categoryID, dateFrom, dateTo, userID)
 }
 
-func (s *ExpenseService) GetTotalExpense(categoryID uuid.UUID, dateFrom time.Time, dateTo time.Time) (int64, error) {
-
+func (s *ExpenseService) GetTotalExpense(categoryID uuid.UUID, dateFrom time.Time, dateTo time.Time, userID uuid.UUID) (int64, error) {
 	dateFrom, dateTo = verifyAndAddEndDateInclusive(dateFrom, dateTo)
-	return s.repository.GetTotalExpense(categoryID, dateFrom, dateTo)
+	return s.repository.GetTotalExpense(categoryID, dateFrom, dateTo, userID)
 }
 
 func (s *ExpenseService) UpdateExpense(expense model.Expense) (*model.Expense, error) {

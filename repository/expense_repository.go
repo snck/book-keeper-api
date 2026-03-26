@@ -46,7 +46,7 @@ func (r *ExpenseRepository) CreateExpense(expense model.Expense) (model.Expense,
 	return expense, nil
 }
 
-func (r *ExpenseRepository) GetExpenses(limit int, offset int, categoryID uuid.UUID, dateFrom time.Time, dateTo time.Time) ([]model.Expense, error) {
+func (r *ExpenseRepository) GetExpenses(limit int, offset int, categoryID uuid.UUID, dateFrom time.Time, dateTo time.Time, userID uuid.UUID) ([]model.Expense, error) {
 	baseQuery := `
 		SELECT
 			e.id,
@@ -62,7 +62,7 @@ func (r *ExpenseRepository) GetExpenses(limit int, offset int, categoryID uuid.U
 		JOIN categories c ON c.id = e.category_id
 	`
 
-	query, args := buildExpenseFilterQuery(baseQuery, categoryID, dateFrom, dateTo)
+	query, args := buildExpenseFilterQuery(baseQuery, categoryID, dateFrom, dateTo, userID)
 
 	args = append(args, limit, offset)
 	query += fmt.Sprintf("\nORDER BY e.created_at DESC, e.id DESC\nLIMIT $%d OFFSET $%d", len(args)-1, len(args))
@@ -107,13 +107,13 @@ func (r *ExpenseRepository) GetExpenses(limit int, offset int, categoryID uuid.U
 	return expenses, nil
 }
 
-func (r *ExpenseRepository) GetTotalExpense(categoryID uuid.UUID, dateFrom time.Time, dateTo time.Time) (int64, error) {
+func (r *ExpenseRepository) GetTotalExpense(categoryID uuid.UUID, dateFrom time.Time, dateTo time.Time, userID uuid.UUID) (int64, error) {
 	baseQuery := `
 		SELECT COUNT(*)
 		FROM expenses e
 	`
 
-	query, args := buildExpenseFilterQuery(baseQuery, categoryID, dateFrom, dateTo)
+	query, args := buildExpenseFilterQuery(baseQuery, categoryID, dateFrom, dateTo, userID)
 
 	var total int64
 	err := r.db.QueryRow(query, args...).Scan(&total)
@@ -180,9 +180,12 @@ func (r *ExpenseRepository) DeleteExpense(id uuid.UUID) error {
 	return nil
 }
 
-func buildExpenseFilterQuery(baseQuery string, categoryID uuid.UUID, dateFrom time.Time, dateTo time.Time) (string, []any) {
-	conditions := make([]string, 0, 3)
-	args := make([]any, 0, 3)
+func buildExpenseFilterQuery(baseQuery string, categoryID uuid.UUID, dateFrom time.Time, dateTo time.Time, userID uuid.UUID) (string, []any) {
+	conditions := make([]string, 0, 4)
+	args := make([]any, 0, 4)
+
+	args = append(args, userID)
+	conditions = append(conditions, fmt.Sprintf("e.user_id = $%d", len(args)))
 
 	if categoryID != uuid.Nil {
 		args = append(args, categoryID)
