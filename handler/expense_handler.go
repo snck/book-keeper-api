@@ -74,9 +74,15 @@ func (h *ExpenseHandler) CreateExpense(c *gin.Context) {
 		return
 	}
 
-	tempUserID, err := uuid.Parse("00000000-0000-0000-0000-000000000001")
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "error parsing id"})
+	userIDValue, exist := c.Get("userID")
+	if !exist {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "invalid user id"})
+		return
+	}
+
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "invalid user id"})
 		return
 	}
 
@@ -85,7 +91,7 @@ func (h *ExpenseHandler) CreateExpense(c *gin.Context) {
 		Category:    model.Category{ID: req.CategoryID},
 		Note:        req.Note,
 		ExpenseDate: expenseDate,
-		User:        model.User{ID: tempUserID},
+		User:        model.User{ID: userID},
 	}
 
 	expense, err = h.service.CreateExpense(expense)
