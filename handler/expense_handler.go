@@ -88,7 +88,7 @@ func (h *ExpenseHandler) CreateExpense(c *gin.Context) {
 
 	expense := model.Expense{
 		Amount:      req.Amount,
-		Category:    model.Category{ID: req.CategoryID},
+		Category:    model.Category{ID: *req.CategoryID},
 		Note:        req.Note,
 		ExpenseDate: expenseDate,
 		User:        model.User{ID: userID},
@@ -133,7 +133,7 @@ func (h *ExpenseHandler) UpdateExpense(c *gin.Context) {
 	expense := model.Expense{
 		ID:          id,
 		Amount:      req.Amount,
-		Category:    model.Category{ID: req.CategoryID},
+		Category:    model.Category{ID: *req.CategoryID},
 		Note:        req.Note,
 		ExpenseDate: expenseDate,
 	}

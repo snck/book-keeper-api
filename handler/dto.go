@@ -3,10 +3,10 @@ package handler
 import "github.com/google/uuid"
 
 type ExpenseRequest struct {
-	Amount      int       `json:"amount"`
-	CategoryID  uuid.UUID `json:"category_id"`
-	Note        string    `json:"note"`
-	ExpenseDate string    `json:"expense_date"`
+	Amount      int        `json:"amount" binding:"required"`
+	CategoryID  *uuid.UUID `json:"category_id" binding:"required"`
+	Note        string     `json:"note"`
+	ExpenseDate string     `json:"expense_date" binding:"required"`
 }
 
 type ExpenseResponse struct {
@@ -30,8 +30,8 @@ type ExpensesResponse struct {
 }
 
 type SignupRequest struct {
-	UserName string `json:"user_name"`
-	Password string `json:"password"`
+	UserName string `json:"user_name" binding:"required"`
+	Password string `json:"password" binding:"required"`
 }
 
 type SignupResponse struct {
@@ -40,8 +40,8 @@ type SignupResponse struct {
 }
 
 type LoginRequest struct {
-	UserName string `json:"user_name"`
-	Password string `json:"password"`
+	UserName string `json:"user_name" binding:"required"`
+	Password string `json:"password" binding:"required"`
 }
 
 type LoginResponse struct {
