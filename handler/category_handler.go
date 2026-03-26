@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/snck/book-keeper-api/service"
 )
 
@@ -16,7 +17,19 @@ func NewCategoryHandler(service *service.CategoryService) *CategoryHandler {
 }
 
 func (h *CategoryHandler) GetCategories(c *gin.Context) {
-	categories, err := h.service.GetCategories()
+	userIDValue, exist := c.Get("userID")
+	if !exist {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "invalid user id"})
+		return
+	}
+
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "invalid user id"})
+		return
+	}
+
+	categories, err := h.service.GetCategories(userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "error with database"})
 		return

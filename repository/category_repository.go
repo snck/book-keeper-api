@@ -3,6 +3,7 @@ package repository
 import (
 	"database/sql"
 
+	"github.com/google/uuid"
 	"github.com/snck/book-keeper-api/model"
 )
 
@@ -14,14 +15,15 @@ func NewCategoryRepository(db *sql.DB) *CategoryRepository {
 	return &CategoryRepository{db: db}
 }
 
-func (r *CategoryRepository) GetCategories() ([]model.Category, error) {
+func (r *CategoryRepository) GetCategories(userID uuid.UUID) ([]model.Category, error) {
 	query := `
 		SELECT id, category_name
 		FROM categories
+		WHERE user_id = $1
 		ORDER BY category_name
 	`
 
-	rows, err := r.db.Query(query)
+	rows, err := r.db.Query(query, userID)
 	if err != nil {
 		return nil, err
 	}
