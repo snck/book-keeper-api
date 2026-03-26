@@ -97,3 +97,7 @@ func (s *AuthenticationService) ParseAndValidateToken(tokenStr string) (*MyCusto
 func (s *AuthenticationService) InvalidateToken(id uuid.UUID, token string, expiredAt time.Time) error {
 	return s.repository.AddTokenToBlocklist(id, token, expiredAt)
 }
+
+func (s *AuthenticationService) IsTokenExistInBlocklist(token string) (bool, error) {
+	return s.repository.IsTokenExistInBlocklist(token)
+}

@@ -80,3 +80,19 @@ func (r *AuthenticationRepository) AddTokenToBlocklist(userID uuid.UUID, token s
 	_, err := r.db.Exec(query, userID, token, expiredAt)
 	return err
 }
+
+func (r *AuthenticationRepository) IsTokenExistInBlocklist(token string) (bool, error) {
+	query := `
+		SELECT COUNT(*)
+		FROM blocklists
+		WHERE token = $1
+	`
+
+	var count int64
+	err := r.db.QueryRow(query, token).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}

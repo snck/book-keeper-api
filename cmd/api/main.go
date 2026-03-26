@@ -8,6 +8,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/snck/book-keeper-api/db"
 	"github.com/snck/book-keeper-api/handler"
+	"github.com/snck/book-keeper-api/middleware"
 	"github.com/snck/book-keeper-api/repository"
 	"github.com/snck/book-keeper-api/service"
 )
@@ -35,17 +36,25 @@ func main() {
 	authService := service.NewAuthenticationService(authRepo)
 	authHandler := handler.NewAuthenticationHandler(authService)
 
+	authMiddleware := middleware.NewAuthenticationMiddleware(authService)
+
 	r := gin.Default()
 
 	r.POST("/signup", authHandler.Signup)
 	r.POST("/login", authHandler.Login)
-	r.POST("/logout", authHandler.Logout)
 
-	r.GET("/expenses", expenseHandler.GetExpenses)
-	r.POST("/expenses", expenseHandler.CreateExpense)
-	r.PUT("/expenses/:id", expenseHandler.UpdateExpense)
-	r.DELETE("/expenses/:id", expenseHandler.DeleteExpense)
-	r.GET("/categories", categoryHandler.GetCategories)
+	authorized := r.Group("/")
+
+	authorized.Use(authMiddleware.ValidateToken())
+	{
+		authorized.GET("/expenses", expenseHandler.GetExpenses)
+		authorized.POST("/expenses", expenseHandler.CreateExpense)
+		authorized.PUT("/expenses/:id", expenseHandler.UpdateExpense)
+		authorized.DELETE("/expenses/:id", expenseHandler.DeleteExpense)
+		authorized.GET("/categories", categoryHandler.GetCategories)
+		authorized.POST("/logout", authHandler.Logout)
+	}
+
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"status": "healthy",
